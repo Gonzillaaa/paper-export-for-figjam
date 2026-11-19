@@ -18,18 +18,11 @@ function placeSvg(svg, name, bb, P) {
   if (!w || !h) throw new Error(`exported SVG for "${name}" has no width/height attributes`);
   const aw = Number(w[1]), ah = Number(h[1]);
   const left = R(bb.x - P.x - (aw - bb.width) / 2), top = R(bb.y - P.y - (ah - bb.height) / 2);
-  return svg.replace(/^<svg/, `<svg layer-name="${esc(name)}" style="position:absolute;left:${left}px;top:${top}px;width:${aw}px;height:${ah}px"`);
+  return svg.replace(/^<svg/, () => `<svg layer-name="${esc(name)}" style="position:absolute;left:${left}px;top:${top}px;width:${aw}px;height:${ah}px"`);
 }
 if (typeof module !== 'undefined') module.exports = { placeSvg, st, familyCss };
-if (typeof figma !== 'undefined') run();
 
-function run() {
-figma.showUI(__html__, { width: 420, height: 260 });
-const images = {};
-const log = m => figma.ui.postMessage({ type: 'log', text: m });
-(async () => {
-try {
-const page = figma.currentPage;
+
 const hx = x => Math.round(x * 255).toString(16).padStart(2, '0');
 const css = (c, a) => a >= 0.999 ? ('#' + hx(c.r) + hx(c.g) + hx(c.b)).toUpperCase() : `rgba(${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)},${R(a)})`;
 const paint = p => (!p || p.visible === false || p.type !== 'SOLID') ? null : css(p.color, p.opacity ?? 1);
@@ -92,111 +85,133 @@ const shadow = arr => arr.filter(Boolean).length ? `;box-shadow:${arr.filter(Boo
 const radius = n => ('cornerRadius' in n && typeof n.cornerRadius === 'number' && n.cornerRadius) ? `;border-radius:${R(n.cornerRadius)}px` : '';
 const opac = n => ('opacity' in n && n.opacity < 1) ? `;opacity:${R(n.opacity)}` : '';
 
-async function svgOf(n, P) {
-  const bb = n.absoluteRenderBounds || n.absoluteBoundingBox;
-  let s = await n.exportAsync({ format: 'SVG_STRING' });
-  s = s.replace(/<\?xml[^>]*>\s*/, '').trim();
-  if (/<image[\s>]/.test(s) || s.length > 60000) {
-    // embedded bitmaps: export a PNG file instead of inlining base64
+function isExportable(node) {
+  return node.visible !== false && node.absoluteBoundingBox != null &&
+    (node.type !== 'TEXT' || node.characters !== '');
+}
+
+async function exportPage(page, settings, log) {
+  const images = {};
+  async function pngOf(n, P) {
+    const bounds = n.absoluteRenderBounds || n.absoluteBoundingBox;
     const key = 'n' + n.id.replace(/[:;]/g, '-');
-    images[key] = figma.base64Encode(await n.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 2 } }));
-    return `<img layer-name="${esc(n.name.slice(0, 60))}" src="${ASSET}/${key}.png" style="position:absolute;left:${R(bb.x - P.x)}px;top:${R(bb.y - P.y)}px;width:${R(bb.width)}px;height:${R(bb.height)}px" />`;
+    const bytes = await n.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: settings.pngScale } });
+    images[key] = figma.base64Encode(bytes);
+    return `<img layer-name="${esc(n.name.slice(0, 60))}" src="${ASSET}/${key}.png" style="${pos(bounds, P)}" />`;
   }
-  return placeSvg(s, n.name, bb, P);
-}
-async function conv(n, P) {
-  if (n.visible === false) return '';
-  const bb = n.absoluteBoundingBox;
-  const nm = esc(n.name.slice(0, 60));
-  switch (n.type) {
-    case 'STICKY': {
-      const sc = bb.width / (n.isWideWidth ? 416 : 240), ins = R(20 * sc);
-      const sh = `0 ${R(sc)}px ${R(3 * sc)}px rgba(0,0,0,0.1), 0 ${R(4 * sc)}px ${R(10 * sc)}px rgba(0,0,0,0.06)`;
-      return `<div layer-name="${nm}" style="${pos(bb, P)};background-color:${topFill(n.fills) || '#FFD966'};box-shadow:${sh};padding:${ins}px;display:flex;flex-direction:column${opac(n)}">${textHTML(n.text, { width: bb.width - 2 * ins, align: n.text.textAlignHorizontal })}</div>`;
-    }
-    case 'SHAPE_WITH_TEXT': {
-      const isE = n.shapeType === 'ELLIPSE';
-      const padX = isE ? R(bb.width * 0.1464) : (bb.width > 600 ? 32 : 16);
-      const br = isE ? ';border-radius:50%' : radius(n);
-      return `<div layer-name="${nm}" style="${pos(bb, P)};background-color:${topFill(n.fills) || 'transparent'}${br}${shadow([strokeCss(n), ...effectsCss(n)])};display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 ${padX}px${opac(n)}">${n.text.characters.length ? textHTML(n.text, { width: bb.width - 2 * padX, align: n.text.textAlignHorizontal }) : ''}</div>`;
-    }
-    case 'TEXT': {
-      const auto = n.textAutoResize;
-      let abs = `position:absolute;left:${R(bb.x - P.x)}px;top:${R(bb.y - P.y)}px` + (auto === 'NONE' ? `;height:${R(bb.height)}px` : '') + opac(n);
-      return textHTML(n, { abs, width: auto === 'WIDTH_AND_HEIGHT' ? null : bb.width, align: n.textAlignHorizontal, name: n.name.slice(0, 60) });
-    }
-    case 'RECTANGLE': {
-      const img = n.fills !== figma.mixed && n.fills.some(f => f.type === 'IMAGE' && f.visible !== false);
-      if (img) {
-        const sw = typeof n.strokeWeight === 'number' && n.strokes.length ? n.strokeWeight : 0;
-        const sc = n.strokes.map(paint).filter(Boolean).pop();
-        return `<img layer-name="${nm}" src="${ASSET}/${n.id.replace(':', '-')}.png" style="${pos(bb, P)};object-fit:cover;background-color:#FFFFFF${sw ? `;border:${sw}px solid ${sc}` : ''}${radius(n)}${shadow(effectsCss(n))}${opac(n)}" />`;
+
+  async function svgOf(n, P) {
+    const bb = n.absoluteRenderBounds || n.absoluteBoundingBox;
+    const svg = (await n.exportAsync({ format: 'SVG_STRING' })).replace(/<\?xml[^>]*>\s*/, '').trim();
+    if (/<image[\s>]/.test(svg) || svg.length > settings.svgCharacterLimit) return pngOf(n, P);
+    return placeSvg(svg, n.name, bb, P);
+  }
+
+  async function conv(n, P) {
+    if (!isExportable(n)) return '';
+    const bb = n.absoluteBoundingBox;
+    const nm = esc(n.name.slice(0, 60));
+    switch (n.type) {
+      case 'STICKY': {
+        const sc = bb.width / (n.isWideWidth ? 416 : 240), ins = R(20 * sc);
+        const sh = `0 ${R(sc)}px ${R(3 * sc)}px rgba(0,0,0,0.1), 0 ${R(4 * sc)}px ${R(10 * sc)}px rgba(0,0,0,0.06)`;
+        return `<div layer-name="${nm}" style="${pos(bb, P)};background-color:${topFill(n.fills) || '#FFD966'};box-shadow:${sh};padding:${ins}px;display:flex;flex-direction:column${opac(n)}">${textHTML(n.text, { width: bb.width - 2 * ins, align: n.text.textAlignHorizontal })}</div>`;
       }
-      return `<div layer-name="${nm}" style="${pos(bb, P)};background-color:${topFill(n.fills) || 'transparent'}${radius(n)}${shadow([strokeCss(n), ...effectsCss(n)])}${opac(n)}"></div>`;
+      case 'SHAPE_WITH_TEXT': {
+        const isE = n.shapeType === 'ELLIPSE';
+        const padX = isE ? R(bb.width * 0.1464) : (bb.width > 600 ? 32 : 16);
+        const br = isE ? ';border-radius:50%' : radius(n);
+        return `<div layer-name="${nm}" style="${pos(bb, P)};background-color:${topFill(n.fills) || 'transparent'}${br}${shadow([strokeCss(n), ...effectsCss(n)])};display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 ${padX}px${opac(n)}">${n.text.characters.length ? textHTML(n.text, { width: bb.width - 2 * padX, align: n.text.textAlignHorizontal }) : ''}</div>`;
+      }
+      case 'TEXT': {
+        const auto = n.textAutoResize;
+        let abs = `position:absolute;left:${R(bb.x - P.x)}px;top:${R(bb.y - P.y)}px` + (auto === 'NONE' ? `;height:${R(bb.height)}px` : '') + opac(n);
+        return textHTML(n, { abs, width: auto === 'WIDTH_AND_HEIGHT' ? null : bb.width, align: n.textAlignHorizontal, name: n.name.slice(0, 60) });
+      }
+      case 'RECTANGLE': {
+        const img = n.fills !== figma.mixed && n.fills.some(f => f.type === 'IMAGE' && f.visible !== false);
+        if (img) return pngOf(n, P);
+        return `<div layer-name="${nm}" style="${pos(bb, P)};background-color:${topFill(n.fills) || 'transparent'}${radius(n)}${shadow([strokeCss(n), ...effectsCss(n)])}${opac(n)}"></div>`;
+      }
+      case 'SECTION': case 'FRAME': case 'GROUP': case 'COMPONENT': case 'INSTANCE': {
+        let kids = '';
+        for (const c of n.children) kids += await conv(c, bb);
+        const fill = n.type === 'GROUP' ? null : topFill(n.fills);
+        const clip = (n.type === 'FRAME' && n.clipsContent) ? ';overflow:hidden' : '';
+        return `<div layer-name="${nm}" style="${pos(bb, P)}${fill ? ';background-color:' + fill : ''}${radius(n)}${shadow([strokeCss(n), ...effectsCss(n)])}${clip}${opac(n)}">${kids}</div>`;
+      }
+      default:
+        return await svgOf(n, P); // CONNECTOR, STAMP, VECTOR, ELLIPSE, LINE, etc.
     }
-    case 'SECTION': case 'FRAME': case 'GROUP': case 'COMPONENT': case 'INSTANCE': {
-      let kids = '';
-      for (const c of n.children) kids += await conv(c, bb);
-      const fill = n.type === 'GROUP' ? null : topFill(n.fills);
-      const clip = (n.type === 'FRAME' && n.clipsContent) ? ';overflow:hidden' : '';
-      return `<div layer-name="${nm}" style="${pos(bb, P)}${fill ? ';background-color:' + fill : ''}${radius(n)}${shadow([strokeCss(n), ...effectsCss(n)])}${clip}${opac(n)}">${kids}</div>`;
-    }
-    default:
-      return await svgOf(n, P); // CONNECTOR, STAMP, VECTOR, ELLIPSE, LINE, etc.
   }
+  async function layerContent(children, origin) {
+    const layers = [];
+    for (const node of children) {
+      const html = await conv(node, origin);
+      if (html) layers.push(html);
+    }
+    return { total: layers.length, html: layers.join('') };
+  }
+
+  const sections = [];
+  const visible = page.children.filter(isExportable);
+  for (const sec of visible.filter(node => node.type === 'SECTION')) {
+    log(`Converting ${sec.name}...`);
+    const bounds = sec.absoluteBoundingBox;
+    sections.push({
+      id: sec.id, name: sec.name, x: bounds.x, y: bounds.y, w: bounds.width, h: bounds.height,
+      fill: topFill(sec.fills), stroke: strokeCss(sec), r: typeof sec.cornerRadius === 'number' ? sec.cornerRadius : null,
+      ...await layerContent(sec.children, bounds),
+    });
+  }
+  const loose = visible.filter(node => node.type !== 'SECTION');
+  if (loose.length) {
+    log('Converting loose page items...');
+    const origin = loose.reduce((min, node) => ({
+      x: Math.min(min.x, node.absoluteBoundingBox.x), y: Math.min(min.y, node.absoluteBoundingBox.y),
+    }), loose[0].absoluteBoundingBox);
+    sections.push({ id: 'LOOSE', name: 'Loose page items', x: origin.x, y: origin.y, ...await layerContent(loose, origin) });
+  }
+  return { page: page.id, sections, images };
 }
-async function collectImage(n) {
-  const f = n.fills.find(f => f.type === 'IMAGE' && f.visible !== false);
-  const key = n.id.replace(':', '-');
-  if (images[key] || !f || !f.imageHash) return;
-  const img = figma.getImageByHash(f.imageHash);
-  if (img) images[key] = figma.base64Encode(await img.getBytesAsync());
-}
-async function walkImages(n) {
-  if (n.type === 'RECTANGLE' && n.fills !== figma.mixed && n.fills.some(f => f.type === 'IMAGE' && f.visible !== false)) await collectImage(n);
-  if ('children' in n) for (const c of n.children) await walkImages(c);
-}
-async function htmlOf(kids, P) {
-  let html = '';
-  for (const k of kids) html += await conv(k, P);
-  return html;
-}
-const sections = [];
-const secs = page.children.filter(c => c.type === 'SECTION');
-for (const sec of secs) {
-  log(`Converting ${sec.name} (${sec.id})...`);
-  const P = sec.absoluteBoundingBox;
-  for (const c of sec.children) await walkImages(c);
-  const firstText = (sec.findOne(n => n.type === 'TEXT') || {}).characters || '';
-  sections.push({ id: sec.id, name: sec.name, firstText: firstText.slice(0, 80), x: P.x, y: P.y, w: P.width, h: P.height,
-    fill: topFill(sec.fills), stroke: strokeCss(sec), r: sec.cornerRadius ?? null, total: sec.children.length, html: await htmlOf(sec.children, P) });
-}
-const loose = page.children.filter(c => c.type !== 'SECTION');
-if (loose.length) {
-  log('Converting loose page items...');
-  const bs = loose.map(c => c.absoluteBoundingBox);
-  const P = { x: Math.min(...bs.map(b => b.x)), y: Math.min(...bs.map(b => b.y)) };
-  for (const c of loose) await walkImages(c);
-  sections.push({ id: 'LOOSE', name: 'Loose page items', x: P.x, y: P.y, total: loose.length, html: await htmlOf(loose, P) });
-}
-log(`Done: ${sections.length} boards, ${Object.keys(images).length} images. Preparing download...`);
-figma.ui.postMessage({ type: 'result', json: JSON.stringify({ fileKey: figma.fileKey || null, page: page.id, sections, images }) });
-} catch (e) {
-  figma.ui.postMessage({ type: 'log', text: 'ERROR: ' + (e && e.stack || e) });
-}
-})();
-figma.ui.onmessage = async m => {
-  if (m === 'close') return figma.closePlugin();
-  if (m === 'pngs') {
+
+function run() {
+  const settings = JSON.parse(__uiFiles__.settings);
+  for (const key of ['pngScale', 'svgCharacterLimit', 'referenceWidth', 'dialogWidth', 'dialogHeight']) {
+    if (!Number.isInteger(settings[key]) || settings[key] <= 0) {
+      return figma.closePlugin(`Invalid or missing export setting: ${key}`);
+    }
+  }
+  figma.showUI(__uiFiles__.main, { width: settings.dialogWidth, height: settings.dialogHeight, themeColors: true });
+  const page = figma.currentPage;
+  const log = text => figma.ui.postMessage({ type: 'log', text });
+  figma.ui.onmessage = async message => {
+    if (message === 'close') return figma.closePlugin();
+    if (message === 'ready') {
+      try {
+        const board = await exportPage(page, settings, log);
+        const hasSections = board.sections.some(s => s.id !== 'LOOSE');
+        log(board.sections.length ? `Converted ${board.sections.length} boards and ${Object.keys(board.images).length} images.`
+          : 'This page has no visible items.');
+        figma.ui.postMessage({ type: 'result', json: JSON.stringify(board), hasSections });
+      } catch (error) {
+        log(`Export failed: ${error.message || error}`);
+      }
+      return;
+    }
+    if (message !== 'pngs') return;
     try {
-      const page = figma.currentPage;
       const shots = {};
-      for (const sec of page.children.filter(c => c.type === 'SECTION')) {
-        log(`Rendering ${sec.name} (${sec.id})...`);
-        shots[sec.id.replace(':', '-')] = figma.base64Encode(await sec.exportAsync({ format: 'PNG', constraint: { type: 'WIDTH', value: 2400 } }));
+      for (const sec of page.children.filter(n => n.type === 'SECTION' && isExportable(n))) {
+        log(`Rendering ${sec.name}...`);
+        const png = await sec.exportAsync({ format: 'PNG', constraint: { type: 'WIDTH', value: settings.referenceWidth } });
+        shots[sec.id.replace(':', '-')] = figma.base64Encode(png);
       }
       figma.ui.postMessage({ type: 'pngs', json: JSON.stringify(shots) });
-    } catch (e) { log('ERROR: ' + (e && e.stack || e)); }
-  }
-};
+    } catch (error) {
+      figma.ui.postMessage({ type: 'reference-error', text: `Reference export failed: ${error.message || error}` });
+    }
+  };
 }
+
+if (typeof figma !== 'undefined') run();

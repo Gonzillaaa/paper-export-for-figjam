@@ -1,10 +1,20 @@
 {
-  "name": "FigJam to Paper export",
-  "id": "figjam-to-paper-export-local",
+  "name": "Board Export",
+  "id": "1705287665960383038",
   "api": "1.0.0",
   "main": "code.js",
-  "ui": "ui.html",
-  "editorType": ["figjam", "figma"],
+  "ui": {
+    "main": "ui.html",
+    "settings": "settings.json"
+  },
+  "editorType": [
+    "figjam",
+    "figma"
+  ],
   "documentAccess": "dynamic-page",
-  "networkAccess": { "allowedDomains": ["none"] }
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  }
 }

@@ -1,36 +1,80 @@
-<div style="font:13px Inter,system-ui,sans-serif;padding:12px">
-  <b>FigJam to Paper export</b>
-  <pre id="log" style="white-space:pre-wrap;font-size:11px;max-height:120px;overflow:auto;background:#f4f4f4;padding:6px"></pre>
-  <button id="dl" disabled>Download figjam-export.json</button>
-  <button id="cp" disabled>Copy JSON</button>
-  <button id="png">Export reference PNGs</button>
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Board Export</title>
+<style>
+  :root { color-scheme: light dark; font: 13px/1.45 Inter, system-ui, sans-serif; }
+  body { margin: 16px; background: var(--figma-color-bg, Canvas); color: var(--figma-color-text, CanvasText); }
+  h1 { margin: 0; font-size: 18px; }
+  p { margin: 4px 0 10px; }
+  a { color: var(--figma-color-text-brand, LinkText); }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; height: 64px; overflow: auto;
+        padding: 8px; background: var(--figma-color-bg-secondary, #eee); color: var(--figma-color-text, #222); }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; padding: 5px 10px; border-radius: 5px; cursor: pointer;
+           border: 1px solid var(--figma-color-border-strong, #888); background: transparent; color: inherit; }
+  button:disabled { opacity: .5; cursor: default; }
+  #dl { background: var(--figma-color-bg-brand, #175cd3); color: var(--figma-color-text-onbrand, white); border-color: transparent; }
+  textarea { position: absolute; left: -9999px; }
+</style>
+<h1>Board Export</h1>
+<p>Save this page, then run the splitter to prepare its layers for Paper.
+  <a href="https://github.com/Gonzillaaa/board-export#use-it" target="_blank" rel="noopener noreferrer">Splitter and instructions</a></p>
+<pre id="log" role="log" aria-label="Export progress"></pre>
+<div class="actions">
+  <button id="dl" disabled>Download board JSON</button>
+  <button id="cp" disabled>Copy board JSON</button>
+  <button id="png" disabled>Export reference PNGs</button>
   <button id="close">Close</button>
-  <textarea id="ta" style="position:absolute;left:-9999px"></textarea>
 </div>
+<textarea id="ta" tabindex="-1" aria-label="Board JSON for copying"></textarea>
 <script>
-let json = null;
-const log = t => { document.getElementById('log').textContent += t + '\n'; };
-onmessage = e => {
-  const m = e.data.pluginMessage;
-  if (m.type === 'log') log(m.text);
-  if (m.type === 'result') {
-    json = m.json; log('Ready: ' + Math.round(json.length / 1024) + ' KB');
-    document.getElementById('dl').disabled = false; document.getElementById('cp').disabled = false;
-    download();
-  }
-  if (m.type === 'pngs') { json = m.json; log('PNGs ready: ' + Math.round(json.length / 1024) + ' KB'); download('figjam-reference-pngs.json'); }
-};
-function download(name) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-  a.download = typeof name === 'string' ? name : 'figjam-export.json'; document.body.appendChild(a); a.click(); a.remove();
-  log('Download started (check ~/Downloads). If nothing saved, use Copy JSON.');
+const byId = id => document.getElementById(id);
+let boardJson;
+function log(text) {
+  const output = byId('log');
+  output.textContent += text + '\n';
+  output.scrollTop = output.scrollHeight;
 }
-document.getElementById('dl').onclick = download;
-document.getElementById('cp').onclick = () => {
-  const ta = document.getElementById('ta'); ta.value = json; ta.select();
-  log(document.execCommand('copy') ? 'Copied to clipboard.' : 'Copy failed.');
+function download(contents, filename) {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([contents], { type: 'application/json' }));
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
+  log('Download requested for ' + filename);
+}
+window.onmessage = event => {
+  if (!event.data || !event.data.pluginMessage) return;
+  const message = event.data.pluginMessage;
+  if (message.type === 'log') log(message.text);
+  if (message.type === 'result') {
+    boardJson = message.json;
+    byId('dl').disabled = byId('cp').disabled = false;
+    byId('png').disabled = !message.hasSections;
+    download(boardJson, 'figjam-export.json');
+  }
+  if (message.type === 'pngs' || message.type === 'reference-error') {
+    byId('png').disabled = false;
+    if (message.type === 'pngs') download(message.json, 'figjam-reference-pngs.json');
+    else log(message.text);
+  }
 };
-document.getElementById('png').onclick = () => parent.postMessage({ pluginMessage: 'pngs' }, '*');
-document.getElementById('close').onclick = () => parent.postMessage({ pluginMessage: 'close' }, '*');
+byId('dl').onclick = () => download(boardJson, 'figjam-export.json');
+byId('cp').onclick = () => {
+  const ta = byId('ta');
+  ta.value = boardJson;
+  ta.select();
+  log(document.execCommand('copy') ? 'Board JSON copied.' : 'Copy failed. Use Download board JSON.');
+  byId('cp').focus();
+};
+byId('png').onclick = () => {
+  byId('png').disabled = true;
+  parent.postMessage({ pluginMessage: 'pngs' }, '*');
+};
+byId('close').onclick = () => parent.postMessage({ pluginMessage: 'close' }, '*');
+parent.postMessage({ pluginMessage: 'ready' }, '*');
 </script>
+</html>
