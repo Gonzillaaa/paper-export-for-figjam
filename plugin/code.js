@@ -1,4 +1,4 @@
-// FigJam to Paper export. Read-only: never changes the FigJam file.
+// Paper Export for FigJam. Read-only: never changes the FigJam file.
 // Converts every section on the current page (plus loose page items) to absolutely positioned HTML
 // and collects image bytes, then hands one JSON file to ui.html for download.
 // Image src values use ASSET as a placeholder; tools/split_export.py rewrites it to the real location.

@@ -1,8 +1,8 @@
-# Board Export
+# Paper Export for FigJam
 
-Move a FigJam board into Paper and keep editing its sticky notes, text and shapes. Board Export reads the current page and saves one JSON file. A local Python script turns the export into HTML parts, image files and a placement plan for Paper Desktop.
+Move a FigJam board into Paper and keep editing its sticky notes, text and shapes. Paper Export for FigJam reads the current page and saves one JSON file. A local Python script turns the export into HTML parts, image files and a placement plan for Paper Desktop.
 
-![Board Export comparing the launch diagram in FigJam and Paper](docs/community/cover.png)
+![Paper Export for FigJam comparing the launch diagram in FigJam and Paper](docs/community/cover.png)
 
 ## Use it
 
@@ -10,9 +10,9 @@ You need Figma Desktop for the development plugin, Python 3.10 or later for the 
 
 ### 1. Export the FigJam page
 
-1. Download and unpack the project, or clone it. Keep the project folders together. [Download the source ZIP](https://github.com/Gonzillaaa/board-export/archive/refs/heads/main.zip).
+1. Download and unpack the project, or clone it. Keep the project folders together. [Download the source ZIP](https://github.com/Gonzillaaa/paper-export-for-figjam/archive/refs/heads/main.zip).
 2. In Figma Desktop, choose **Plugins → Development → Import plugin from manifest** and open `plugin/manifest.json`.
-3. Open the FigJam page you want and run **Board Export**. Save `figjam-export.json`. You can also use **Download board JSON** to save another copy or **Copy board JSON** to save it through a text editor.
+3. Open the FigJam page you want and run **Paper Export for FigJam**. Save `figjam-export.json`. You can also use **Download board JSON** to save another copy or **Copy board JSON** to save it through a text editor.
 
 **Export reference PNGs** downloads a separate `figjam-reference-pngs.json` containing base64-encoded PNGs of the visible sections, keyed by section ID with the colon replaced by a hyphen. Run the splitter on the board JSON. The reference file is for visual comparison.
 
@@ -59,7 +59,7 @@ The sample board contains a team retro, a launch diagram and a loose title. On t
 
 ![The imported retrospective and launch flow with a rectangular decision and static arrows](docs/images/demo-paper.png)
 
-To recreate the sample, import `demo/build-board/manifest.json` as a separate development plugin. Run **FigJam to Paper demo board** once on an empty FigJam page. The demo builder adds objects to that page.
+To recreate the sample, import `demo/build-board/manifest.json` as a separate development plugin. Run **Paper Export demo board** once on an empty FigJam page. The demo builder adds objects to that page.
 
 ## Fidelity and limits
 
@@ -77,7 +77,7 @@ The earlier exporter was also exercised on a board with 15 sections, 548 top-lev
 
 ## Data and permissions
 
-Board Export reads the current page. Its manifest disables network access. The splitter runs locally. The JSON, clipboard and output folder contain the exported board content, including images. The Paper import is a separate step that sends the chosen content to Paper and may also share it with your selected agent.
+Paper Export for FigJam reads the current page. Its manifest disables network access. The splitter runs locally. The JSON, clipboard and output folder contain the exported board content, including images. The Paper import is a separate step that sends the chosen content to Paper and may also share it with your selected agent.
 
 ## Development
 
@@ -94,6 +94,6 @@ The JavaScript suite exercises the plugin and UI with Figma and browser boundary
 
 ## Support and license
 
-Report the plugin version or commit, the operation that failed, and the message shown. A minimal synthetic board is enough to demonstrate most issues. [GitHub Issues](https://github.com/Gonzillaaa/board-export/issues).
+Report the plugin version or commit, the operation that failed, and the message shown. A minimal synthetic board is enough to demonstrate most issues. [GitHub Issues](https://github.com/Gonzillaaa/paper-export-for-figjam/issues).
 
 The source is available under the [MIT License](LICENSE). Maintainers can find the [Community listing and artwork](docs/community/listing.md) alongside the screenshots.

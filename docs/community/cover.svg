@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080">
-  <title>Board Export — Move FigJam boards into Paper</title>
+  <title>Paper Export for FigJam: move FigJam boards into Paper</title>
   <desc>The launch-plan diagram before and after export. The original decision diamond becomes a rectangle in Paper.</desc>
   <rect width="1920" height="1080" fill="#F9F8F4"/>
   <rect width="1920" height="344" fill="#262338"/>
   <image x="88" y="78" width="180" height="180" xlink:href="icon.svg"/>
   <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
-    <text x="292" y="199" font-size="144" font-weight="700" letter-spacing="-6" fill="#FFFEFC">Board Export</text>
+    <text x="292" y="199" font-size="112" font-weight="700" letter-spacing="-4" fill="#FFFEFC">Paper Export for FigJam</text>
     <text x="300" y="278" font-size="46" fill="#DDD8EE">Move FigJam boards into Paper</text>
     <path d="M88 449h810m124 0h810" stroke="#CCC9CF" stroke-width="2"/>
     <text x="88" y="424" font-size="38" font-weight="600" fill="#262338">FigJam board</text>

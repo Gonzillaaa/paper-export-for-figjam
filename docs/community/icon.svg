@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <title>Board Export</title>
+  <title>Paper Export for FigJam</title>
   <rect width="128" height="128" fill="#262338"/>
   <path d="M35 39h56a5 5 0 0 1 5 5v55a5 5 0 0 1-5 5H35a5 5 0 0 1-5-5V44a5 5 0 0 1 5-5Z" fill="#AEA0FB"/>
   <path d="M26 26h56a5 5 0 0 1 5 5v41L70 90H26a5 5 0 0 1-5-5V31a5 5 0 0 1 5-5Z" fill="#FFF2A7"/>

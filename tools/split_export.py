@@ -1,4 +1,4 @@
-"""Split a FigJam to Paper export into image files and HTML parts small enough to paste into Paper.
+"""Split a Paper Export for FigJam download into image files and HTML parts small enough to paste into Paper.
 
 Usage:
     python3 tools/split_export.py figjam-export.json out/ [--budget 24000] [--asset-prefix URL]

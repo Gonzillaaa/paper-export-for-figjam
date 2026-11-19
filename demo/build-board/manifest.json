@@ -1,6 +1,6 @@
 {
-  "name": "FigJam to Paper demo board",
-  "id": "figjam-to-paper-demo-board-local",
+  "name": "Paper Export demo board",
+  "id": "paper-export-demo-board-local",
   "api": "1.0.0",
   "main": "code.js",
   "editorType": ["figjam"],

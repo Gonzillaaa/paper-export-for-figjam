@@ -1,5 +1,5 @@
 [project]
-name = "figjam-to-paper"
+name = "paper-export-for-figjam"
 version = "0.1.0"
 description = "Export FigJam boards to HTML and split them into pieces Paper can take."
 readme = "README.md"
