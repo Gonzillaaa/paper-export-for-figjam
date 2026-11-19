@@ -41,7 +41,7 @@ const fontCss = s => {
   if (s.textCase === 'UPPER') o['text-transform'] = 'uppercase';
   return o;
 };
-const st = o => Object.entries(o).map(([k, v]) => `${k}:${v}`).join(';');
+const st = o => Object.entries(o).map(([k, v]) => `${k}:${esc(String(v).replace(/[;{}]/g, ''))}`).join(';');
 const diff = (o, base) => { const d = {}; for (const k in o) if (o[k] !== base[k]) d[k] = o[k]; return d; };
 
 // t: TextNode or TextSublayer. box: {abs: css string for positioning, width: number|null, align, name}
