@@ -89,3 +89,81 @@ def test_split_rejects_missing_image(tmp_path):
     export = write_export(tmp_path, [section("1:2", '<img src="__FIGJAM_ASSET__/gone.png" />', 1)])
     with pytest.raises(ExportError, match="gone"):
         split_export(export, tmp_path / "out", budget=100, asset_prefix="x")
+
+
+@pytest.mark.parametrize("key,value", [("invalid/key", PNG), ("second", "invalid base64")])
+def test_invalid_image_leaves_existing_empty_directory_untouched(tmp_path, key, value):
+    export = write_export(tmp_path, [section("1", "<p>ok</p>", 1)], {"first": PNG, key: value})
+    out = tmp_path / "out"
+    out.mkdir()
+    with pytest.raises(ExportError, match="image"):
+        split_export(export, out, 100, "assets")
+    assert list(out.iterdir()) == []
+
+
+def test_empty_page_writes_empty_plan(tmp_path):
+    export = write_export(tmp_path, [])
+    out = tmp_path / "out"
+    plan = split_export(export, out, 100, "assets")
+    assert plan["sections"] == []
+    assert json.loads((out / "plan.json").read_text()) == plan
+
+
+def test_asset_rewrite_preserves_board_text_and_escapes_attribute(tmp_path):
+    label = "__FIGJAM_ASSET__/label.png"
+    html = f'<p>{label}</p><img layer-name="{label}" src="__FIGJAM_ASSET__/k1.png" />'
+    export = write_export(tmp_path, [section("1", html, 2)], {"k1": PNG})
+    out = tmp_path / "out"
+    plan = split_export(export, out, 1000, 'local/" & assets')
+    part = plan["sections"][0]["parts"][0]["file"]
+    assert (out / "parts" / part).read_text() == html.replace(
+        'src="__FIGJAM_ASSET__', 'src="local/&quot; &amp; assets'
+    )
+
+
+@pytest.mark.parametrize("data,budget", [
+    ({"sections": [], "images": {}}, 0),
+    ({"some-section": "PNG"}, 100),
+    ({"sections": [section("1", "", 0, x="x")], "images": {}}, 100),
+    ({"sections": [section("1", "", 0), {"id": "missing"}], "images": {}}, 100),
+])
+def test_cli_rejects_invalid_exports_without_creating_output(tmp_path, capsys, data, budget):
+    from split_export import main
+
+    export = tmp_path / "export.json"
+    export.write_text(json.dumps(data))
+    out = tmp_path / "out"
+    assert main([str(export), str(out), "--budget", str(budget)]) != 0
+    assert "error:" in capsys.readouterr().err
+    assert not out.exists()
+
+
+def test_legacy_photos_get_their_actual_extension(tmp_path):
+    raw = b"\xff\xd8\xff\xe0demo"
+    data = write_export(tmp_path, [section("1", '<img src="__FIGJAM_ASSET__/k.png"/>', 1)],
+                        {"k": base64.b64encode(raw).decode()})
+    out = tmp_path / "out"
+    plan = split_export(data, out, 100, "assets")
+    part = plan["sections"][0]["parts"][0]["file"]
+    assert (out / "assets/k.jpg").read_bytes() == raw
+    assert (out / "parts" / part).read_text() == '<img src="assets/k.jpg"/>'
+
+
+def test_image_keys_are_portable_across_platforms(tmp_path):
+    data = write_export(tmp_path, [], {"CON": PNG})
+    with pytest.raises(ExportError, match="image"):
+        split_export(data, tmp_path / "out", 100, "assets")
+
+
+def test_concurrent_runs_publish_one_complete_result(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    export = write_export(tmp_path, [section("1", "<p>ok</p>", 1)])
+    out = tmp_path / "out"
+    out.mkdir()
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        jobs = [workers.submit(split_export, export, out, 100, "assets") for _ in range(2)]
+    assert sum(job.exception() is None for job in jobs) == 1
+    winner = next(job.result() for job in jobs if job.exception() is None)
+    assert json.loads((out / "plan.json").read_text()) == winner
+    assert (out / "parts" / winner["sections"][0]["parts"][0]["file"]).read_text() == "<p>ok</p>"
