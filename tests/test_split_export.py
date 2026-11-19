@@ -3,7 +3,6 @@ import base64
 import json
 
 import pytest
-
 from split_export import ExportError, elements, group, split_export
 
 PNG = base64.b64encode(b"\x89PNG fake bytes").decode()

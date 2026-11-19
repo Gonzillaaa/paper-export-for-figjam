@@ -84,9 +84,10 @@ Board Export reads the current page. Its manifest disables network access. The s
 The plugin runs as plain JavaScript in Figma, with no build step. `plugin/settings.json` holds the raster scale, reference width, SVG threshold and window size. `tools/settings.json` sets the default part budget.
 
 ```sh
-node --test tests/*.test.js
+node --test
+npx --yes oxlint@1.94.0 --deny-warnings plugin/code.js demo/build-board/code.js tests
 uv run --locked pytest
-ruff check .
+uv run --locked ruff check .
 ```
 
 The JavaScript suite exercises the plugin and UI with Figma and browser boundary fixtures. The Python suite runs the splitter against files, including invalid input, images and concurrent writes.

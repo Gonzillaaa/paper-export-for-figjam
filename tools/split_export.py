@@ -29,7 +29,7 @@ from pathlib import Path
 
 PLACEHOLDER = "__FIGJAM_ASSET__"
 ASSET_KEY = re.compile(r"[A-Za-z0-9_-]+")
-RESERVED_NAME = re.compile(r"(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])", re.I)
+RESERVED_NAME = re.compile(r"(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])", re.IGNORECASE)
 ATTRIBUTE = re.compile(r"""(\s+)([^\s=/>]+)(\s*=\s*)("[^"]*"|'[^']*')""")
 TAG = re.compile(r'<(/?)([a-zA-Z][\w:.-]*)(?:[^>"]|"[^"]*")*?(/?)>')
 VOID = {"img", "br", "hr", "input", "meta", "link"}
