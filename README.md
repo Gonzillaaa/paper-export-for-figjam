@@ -80,7 +80,7 @@ Tested on one FigJam board: 15 sections, 548 top-level items, 8 images, 73 conne
 ## Development
 
 ```bash
-node --test tests/*.test.js     # plugin: arrow placement
+node --test tests/*.test.js     # plugin: arrow placement, style escaping
 uv run pytest                   # split tool
 ```
 

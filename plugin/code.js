@@ -5,6 +5,10 @@
 const ASSET = '__FIGJAM_ASSET__';
 const R = v => Math.round(v * 100) / 100;
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// Style values come from the file (font names especially): HTML-escape them and drop CSS separators so a
+// value can neither close the style attribute nor add declarations. Font families are also quoted.
+const st = o => Object.entries(o).map(([k, v]) => `${k}:${esc(String(v).replace(/[;{}]/g, ''))}`).join(';');
+const familyCss = f => `'${f.replace(/['"\\]/g, '')}'`;
 
 // Figma reports render bounds smaller than an exported SVG's own width/height (arrow heads and stroke
 // caps sit outside them; a straight connector has zero height). Sizing the SVG to the render bounds
@@ -16,7 +20,7 @@ function placeSvg(svg, name, bb, P) {
   const left = R(bb.x - P.x - (aw - bb.width) / 2), top = R(bb.y - P.y - (ah - bb.height) / 2);
   return svg.replace(/^<svg/, `<svg layer-name="${esc(name)}" style="position:absolute;left:${left}px;top:${top}px;width:${aw}px;height:${ah}px"`);
 }
-if (typeof module !== 'undefined') module.exports = { placeSvg };
+if (typeof module !== 'undefined') module.exports = { placeSvg, st, familyCss };
 if (typeof figma !== 'undefined') run();
 
 function run() {
@@ -35,13 +39,12 @@ const fw = st => W[st.replace(/\s*Italic/, '').replace(/\s+/g, '').trim() || 'Re
 const lhOf = s => s.lineHeight.unit === 'PERCENT' ? R(s.fontSize * s.lineHeight.value / 100) : s.lineHeight.unit === 'PIXELS' ? R(s.lineHeight.value) : R(s.fontSize * 1.21);
 const lsOf = s => s.letterSpacing.unit === 'PERCENT' ? R(s.letterSpacing.value / 100 * 1000) / 1000 + 'em' : R(s.letterSpacing.value) + 'px';
 const fontCss = s => {
-  const o = { 'font-family': s.fontName.family, 'font-weight': fw(s.fontName.style), 'font-size': R(s.fontSize) + 'px', 'letter-spacing': lsOf(s), color: topFill(s.fills) || '#000000' };
+  const o = { 'font-family': familyCss(s.fontName.family), 'font-weight': fw(s.fontName.style), 'font-size': R(s.fontSize) + 'px', 'letter-spacing': lsOf(s), color: topFill(s.fills) || '#000000' };
   if (/Italic/.test(s.fontName.style)) o['font-style'] = 'italic';
   if (s.textDecoration && s.textDecoration !== 'NONE') o['text-decoration'] = s.textDecoration === 'UNDERLINE' ? 'underline' : 'line-through';
   if (s.textCase === 'UPPER') o['text-transform'] = 'uppercase';
   return o;
 };
-const st = o => Object.entries(o).map(([k, v]) => `${k}:${esc(String(v).replace(/[;{}]/g, ''))}`).join(';');
 const diff = (o, base) => { const d = {}; for (const k in o) if (o[k] !== base[k]) d[k] = o[k]; return d; };
 
 // t: TextNode or TextSublayer. box: {abs: css string for positioning, width: number|null, align, name}
