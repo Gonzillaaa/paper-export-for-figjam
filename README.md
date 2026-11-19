@@ -1,140 +1,98 @@
-# FigJam to Paper
+# Board Export
 
-Move a FigJam board into [Paper](https://paper.design) as editable layers: stickies, shapes with text, text, images, sections, connectors and stamps, each at its original position and size.
+Move a FigJam board into Paper and keep editing its sticky notes, text and shapes. Board Export reads the current page and saves one JSON file. A local Python script turns the export into HTML parts, image files and a placement plan for Paper Desktop.
 
-## Why this exists
-
-Paper can import from Figma by copy and paste, but its documentation only covers Figma Design files, not FigJam. A FigJam board is mostly stickies, connectors and shapes with text, and none of those have a native route into Paper.
-
-The other obvious route is to read the board through Figma's MCP server and have an AI agent rebuild it. On a large board that means hundreds of calls, and Figma's MCP server is rate limited: in our case the quota ran out before the board was done.
-
-This repo takes a different route. A small Figma plugin reads the whole board inside Figma, where there is no quota, and turns it into HTML in one pass. The rest happens offline.
-
-## Demo
-
-A small board with two sections: a retro made of stickies, and a launch flow made of shapes, connectors and a sticky.
-
-**Before, in FigJam:**
-
-![The demo board in FigJam](docs/images/demo-figjam.png)
-
-**After, in Paper:** every item is an editable layer at its original position and size.
-
-![The same board in Paper](docs/images/demo-paper.png)
-
-Two differences are visible: the "Users happy?" diamond arrives as a rectangle, and stickies lose their author label (we also hid the labels in the FigJam picture). Both are listed under [Limits](#limits).
-
-The split step turned this board into this plan (shortened):
-
-```json
-{
-  "budget": 24000,
-  "asset_prefix": "paper-asset:///path/to/out/assets",
-  "sections": [
-    {
-      "id": "6:3",
-      "name": "Team retro",
-      "left": 0, "top": 140, "width": 1180, "height": 760,
-      "fill": "#EBF5FF",
-      "border": "inset 0 0 0 2px #85C2FF",
-      "radius": 12,
-      "parts": [
-        { "file": "00-6-3-00.html", "elements": 9, "chars": 4111, "over_budget": false }
-      ]
-    },
-    {
-      "id": "6:40",
-      "name": "Launch plan",
-      "left": 1320, "top": 140, "width": 1240, "height": 760,
-      "parts": [
-        { "file": "01-6-40-00.html", "elements": 11, "chars": 11853, "over_budget": false }
-      ]
-    }
-  ]
-}
-```
-
-Items outside any section (here, the board title) go into a last entry named "Loose page items", with no size or fill.
-
-To build the same board yourself, import `demo/build-board/manifest.json` as a development plugin, run it once on an empty FigJam page, then follow the steps below.
-
-## How it works
-
-1. **Export.** The plugin walks every section on the current FigJam page and converts each item to absolutely positioned HTML with inline styles. It downloads one file, `figjam-export.json`, holding each board's HTML and every image.
-2. **Split.** `tools/split_export.py` saves the images, cuts each board's HTML into parts small enough to paste (only between top-level items, never inside one), and writes `plan.json` with each board's position, size, colour, border and the order of its parts.
-3. **Paste.** An agent with Paper's MCP server (we used Claude Code) creates one artboard per board from the plan and pastes the parts into it in order.
-
-The plugin is read-only: it never changes the FigJam file, and it has no network access (`allowedDomains: none`).
+![Board Export comparing the launch diagram in FigJam and Paper](docs/community/cover.png)
 
 ## Use it
 
-You need the Figma desktop app, Python 3.10 or later, and for step 3 an MCP client connected to Paper.
+You need Figma Desktop for the development plugin, Python 3.10 or later for the splitter, and Paper Desktop connected to an MCP client for the import. The splitter uses the Python standard library. [Connect an agent to Paper Desktop](https://paper.design/docs/mcp).
 
-### 1. Export from FigJam
+### 1. Export the FigJam page
 
-1. In the Figma desktop app: **Plugins > Development > Import plugin from manifest**, then pick `plugin/manifest.json`.
-2. Open the FigJam file on the page you want, and run **FigJam to Paper export** from **Plugins > Development**.
-3. It downloads `figjam-export.json`. If the download does not appear, press **Copy JSON** and save the clipboard to a file.
+1. Download and unpack the project, or clone it. Keep the project folders together. [Download the source ZIP](https://github.com/Gonzillaaa/board-export/archive/refs/heads/main.zip).
+2. In Figma Desktop, choose **Plugins → Development → Import plugin from manifest** and open `plugin/manifest.json`.
+3. Open the FigJam page you want and run **Board Export**. Save `figjam-export.json`. You can also use **Download board JSON** to save another copy or **Copy board JSON** to save it through a text editor.
 
-**Export reference PNGs** saves a picture of every section (`figjam-reference-pngs.json`, base64 PNGs keyed by section) so you can compare the result in Paper by eye.
+**Export reference PNGs** downloads a separate `figjam-reference-pngs.json` containing base64-encoded PNGs of the visible sections, keyed by section ID with the colon replaced by a hyphen. Run the splitter on the board JSON. The reference file is for visual comparison.
 
-### 2. Split
+### 2. Split the export
 
-```bash
-python3 tools/split_export.py figjam-export.json out/
+From the unpacked project directory, run the command below with the path to your saved export. On Windows, use `py -3` in place of `python3`.
+
+```sh
+python3 tools/split_export.py "/path/to/figjam-export.json" out/
 ```
 
-The output folder must be new or empty. The tool checks everything before it writes anything: the HTML of each board must be balanced, its number of top-level items must match the export, and every image it points to must be in the export.
+Choose a new or empty output folder. On success it contains:
 
-Options:
+| Path | Contents |
+| --- | --- |
+| `out/plan.json` | Artboard names, relative positions, dimensions, appearance and ordered part filenames |
+| `out/parts/` | HTML split between top-level layers, in drawing order within each board |
+| `out/assets/` | Images referenced by those parts |
 
-- `--budget N` sets the maximum characters per part (default 24000, the size we tested). A single item larger than the budget stays whole and is reported as a warning; in our test a 28,554-character part pasted fine.
-- `--asset-prefix URL` sets where image `src` values point. The default is `paper-asset://<absolute path to out/assets>`, which Paper's MCP `write_html` reads from local disk.
+The splitter checks HTML balance, layer counts and image references before publishing the output. An empty page yields an empty plan. To retry after a successful run, choose a fresh output folder.
 
-### 3. Paste into Paper
+- `--budget N` sets a positive character budget per part. The default is 24,000. A single larger layer stays intact and the CLI prints a warning.
+- `--asset-prefix URL` sets the image location. By default the parts point to `out/assets/` using absolute `paper-asset://` paths for Paper Desktop. If you move the output, run the splitter again at the new location.
 
-Open the Paper file and page you want, then give your agent something like this:
+### 3. Import into Paper
 
-> Read `out/plan.json`. For each board, create a Paper artboard with that name, left, top, width, height, background fill, border (it is a CSS box-shadow) and corner radius. Boards without a width are loose items: create an artboard that fits them. Then, for each board in order, read each part file in order and call `write_html` on that artboard with `mode: "insert-children"` and the file contents copied exactly, byte for byte. Never paste a part twice. After each board, check that the artboard's child count equals the sum of `elements` for its parts, then take a screenshot.
+Open the destination file in Paper Desktop and give your connected agent access to the output folder. This prompt uses the same steps as the demo verification.
 
-Read part files with a tool that returns them unchanged: some file-reading tools add line numbers.
+> Read `out/plan.json`. For each entry create a new artboard with its name, width, height, fill, border (CSS box-shadow) and radius. Size the “Loose page items” artboard to enclose its contents. After creating the boards, use `update_styles` to set their left and top from the plan. For each board, read its files from `out/parts/` in plan order and pass each file’s exact HTML to `write_html` with `mode: "insert-children"`. Insert each part once. Check the resulting artboard positions and dimensions, compare each direct child count with the sum of the part element counts, and take a screenshot of each board.
 
-### Without an agent (untested)
+Paper chooses an open spot when it creates an artboard. The separate positioning step restores the layout relative to the top-left of the export. Some file readers add line numbers, so use one that preserves the HTML.
 
-Paper also [accepts pasted HTML](https://paper.design/docs/paste/html) with inline styles, which is what the parts contain. We have not tried pasting the parts by hand. If you do, images must be at public URLs for that route: host `out/assets/` somewhere and pass `--asset-prefix https://your-host/assets`.
+**Manual alternative (untested).** Paper also accepts pasted inline HTML. For that route, Paper requires publicly reachable image URLs. If those images are intended for public access, supply their location with `--asset-prefix`. [Paper’s HTML import guide](https://paper.design/docs/paste/html).
 
-## What carries over
+## Demo
 
-Tested on one FigJam board: 15 sections, 548 top-level items, 8 images, 73 connectors. All boards landed at their original positions and sizes.
+The sample board contains a team retro, a launch diagram and a loose title. On the release check, Paper imported **9 retro layers, 11 flow layers and 1 title**. The two section artboards measured **1180 × 760** and **1240 × 760**. The screenshots below show the sections. The FigJam screenshot hides author labels for comparison.
 
-| FigJam | In Paper |
-|---|---|
-| Sections, frames, groups | Artboards and nested frames |
-| Stickies | Coloured frames with shadow and text, scaled to sticky size |
-| Shapes with text | Frames with fill, border and centred text; ellipses get a full radius, other shapes become rectangles |
-| Text | Text layers with font, size, weight, colour, spacing, alignment and mixed styles |
-| Image rectangles | Images (`object-fit: cover`) |
-| Connectors, stamps, vectors, lines | SVG |
-| Anything with an embedded bitmap, or SVG over 60,000 characters | PNG at 2x |
+**FigJam**
 
-## Limits
+![A retrospective with six sticky notes beside a flowchart with a diamond decision](docs/images/demo-figjam.png)
 
-- **Connectors are pictures, not live arrows.** They sit in the right place but do not follow items you move in Paper.
-- **Arrow placement.** Figma reports a connector's bounds without its arrowheads, so the plugin sizes each SVG from its own width and height and centres it on those bounds. We checked this on 73 connectors. Other vectors use the same rule; when their sizes already agree it changes nothing, but we have not checked every vector type.
-- **Shapes.** Only ellipses keep their outline. Diamonds, triangles and other FigJam shapes arrive as rectangles with the shape's fill, border and text.
-- **Fonts** are passed through by name. If Paper does not have a font, it falls back.
-- **Not exported:** sticky author labels, comments, widgets' interactive state, hidden items, and anything outside the current page.
-- **No automatic comparison.** Use the reference PNGs to check the result by eye.
+**Paper**
+
+![The imported retrospective and launch flow with a rectangular decision and static arrows](docs/images/demo-paper.png)
+
+To recreate the sample, import `demo/build-board/manifest.json` as a separate development plugin. Run **FigJam to Paper demo board** once on an empty FigJam page. The demo builder adds objects to that page.
+
+## Fidelity and limits
+
+| Source | Paper result |
+| --- | --- |
+| Sections, frames and groups | Top-level sections become artboards. Nested containers become frames. Loose page items share a separate artboard. |
+| Sticky notes | Coloured frames with editable text and shadow. Author labels are omitted. |
+| Shapes with text | Editable text inside a frame. Ellipses keep their outline. Other shapes use rectangles or rounded rectangles. |
+| Text | Font names, size, weight, colour, alignment, spacing and supported mixed styles. List markers become text. Font availability and wrapping can change the result. |
+| Image rectangles | PNG layers rendered from the visible rectangle, including its crop and effects. |
+| Connectors, stamps and vectors | SVG layers. Connectors retain their appearance and stay fixed when you move their endpoints. |
+| SVG fallback | Embedded bitmaps and SVGs over 60,000 characters become PNG layers at 2× scale. |
+
+The earlier exporter was also exercised on a board with 15 sections, 548 top-level items, 8 images and 73 connectors. For other boards, compare the result with your reference images, especially rotated objects, gradients, masks, overlapping sections, complex text and widgets. Hidden layers, comments, widget interactions and other pages are outside the export.
+
+## Data and permissions
+
+Board Export reads the current page. Its manifest disables network access. The splitter runs locally. The JSON, clipboard and output folder contain the exported board content, including images. The Paper import is a separate step that sends the chosen content to Paper and may also share it with your selected agent.
 
 ## Development
 
-```bash
-node --test tests/*.test.js     # plugin: arrow placement, style escaping
-uv run pytest                   # split tool
+The plugin runs as plain JavaScript in Figma, with no build step. `plugin/settings.json` holds the raster scale, reference width, SVG threshold and window size. `tools/settings.json` sets the default part budget.
+
+```sh
+node --test tests/*.test.js
+uv run --locked pytest
+ruff check .
 ```
 
-`plugin/code.js` runs as a plain script in Figma (no build step). It exports its pure helpers when loaded by Node, which is how the tests reach them.
+The JavaScript suite exercises the plugin and UI with Figma and browser boundary fixtures. The Python suite runs the splitter against files, including invalid input, images and concurrent writes.
 
-## License
+## Support and license
 
-MIT. See [LICENSE](LICENSE).
+Report the plugin version or commit, the operation that failed, and the message shown. A minimal synthetic board is enough to demonstrate most issues. [GitHub Issues](https://github.com/Gonzillaaa/board-export/issues).
+
+The source is available under the [MIT License](LICENSE). Maintainers can find the [Community listing and artwork](docs/community/listing.md) alongside the screenshots.
