@@ -1,0 +1,7 @@
+__pycache__/
+.pytest_cache/
+.venv/
+# exports and split output hold your board's content
+figjam-export*.json
+figjam-reference-pngs*.json
+out/

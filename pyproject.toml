@@ -1,0 +1,15 @@
+[project]
+name = "figjam-to-paper"
+version = "0.1.0"
+description = "Export FigJam boards to HTML and split them into pieces Paper can take."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tools"]

@@ -1,0 +1,36 @@
+<div style="font:13px Inter,system-ui,sans-serif;padding:12px">
+  <b>FigJam to Paper export</b>
+  <pre id="log" style="white-space:pre-wrap;font-size:11px;max-height:120px;overflow:auto;background:#f4f4f4;padding:6px"></pre>
+  <button id="dl" disabled>Download figjam-export.json</button>
+  <button id="cp" disabled>Copy JSON</button>
+  <button id="png">Export reference PNGs</button>
+  <button id="close">Close</button>
+  <textarea id="ta" style="position:absolute;left:-9999px"></textarea>
+</div>
+<script>
+let json = null;
+const log = t => { document.getElementById('log').textContent += t + '\n'; };
+onmessage = e => {
+  const m = e.data.pluginMessage;
+  if (m.type === 'log') log(m.text);
+  if (m.type === 'result') {
+    json = m.json; log('Ready: ' + Math.round(json.length / 1024) + ' KB');
+    document.getElementById('dl').disabled = false; document.getElementById('cp').disabled = false;
+    download();
+  }
+  if (m.type === 'pngs') { json = m.json; log('PNGs ready: ' + Math.round(json.length / 1024) + ' KB'); download('figjam-reference-pngs.json'); }
+};
+function download(name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  a.download = typeof name === 'string' ? name : 'figjam-export.json'; document.body.appendChild(a); a.click(); a.remove();
+  log('Download started (check ~/Downloads). If nothing saved, use Copy JSON.');
+}
+document.getElementById('dl').onclick = download;
+document.getElementById('cp').onclick = () => {
+  const ta = document.getElementById('ta'); ta.value = json; ta.select();
+  log(document.execCommand('copy') ? 'Copied to clipboard.' : 'Copy failed.');
+};
+document.getElementById('png').onclick = () => parent.postMessage({ pluginMessage: 'pngs' }, '*');
+document.getElementById('close').onclick = () => parent.postMessage({ pluginMessage: 'close' }, '*');
+</script>
