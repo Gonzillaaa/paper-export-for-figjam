@@ -60,3 +60,23 @@ test('reference export uses only visible sections of the originally exported pag
   await figma.ui.onmessage('pngs');
   assert.deepEqual(JSON.parse(messages.find(m => m.type === 'pngs').json), { '1-1': 'AQ==' });
 });
+
+test('mixed styles and sequential list numbers survive export', async () => {
+  const style = {
+    fontName: { family: 'Inter', style: 'Italic' }, fontSize: 16, fills: [],
+    lineHeight: { unit: 'AUTO' }, letterSpacing: { unit: 'PIXELS', value: 0 },
+    textCase: 'UPPER', textDecoration: 'UNDERLINE', listOptions: { type: 'ORDERED' },
+  };
+  const text = { ...rect, type: 'TEXT', characters: 'one\ntwo', getStyledTextSegments: () => [
+    { ...style, characters: 'one\n' },
+    { ...style, characters: 'two', fontName: { family: 'Inter', style: 'Regular' }, textDecoration: 'NONE', textCase: 'ORIGINAL' },
+  ] };
+  const { board } = await exportInFigma([text]);
+  const html = board.sections[0].html;
+  assert.match(html, /1\. {2}/);
+  assert.match(html, /2\. {2}/);
+  assert.match(html, /font-style:italic/);
+  assert.match(html, /text-decoration:underline/);
+  assert.match(html, /text-transform:uppercase/);
+  assert.doesNotMatch(html.match(/<p[^>]*>/)[0], /font-style:italic|text-decoration:underline|text-transform:uppercase/);
+});

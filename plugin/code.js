@@ -35,7 +35,8 @@ const fontCss = s => {
   const o = { 'font-family': familyCss(s.fontName.family), 'font-weight': fw(s.fontName.style), 'font-size': R(s.fontSize) + 'px', 'letter-spacing': lsOf(s), color: topFill(s.fills) || '#000000' };
   if (/Italic/.test(s.fontName.style)) o['font-style'] = 'italic';
   if (s.textDecoration && s.textDecoration !== 'NONE') o['text-decoration'] = s.textDecoration === 'UNDERLINE' ? 'underline' : 'line-through';
-  if (s.textCase === 'UPPER') o['text-transform'] = 'uppercase';
+  const transform = { UPPER: 'uppercase', LOWER: 'lowercase', TITLE: 'capitalize' }[s.textCase];
+  if (transform) o['text-transform'] = transform;
   return o;
 };
 const diff = (o, base) => { const d = {}; for (const k in o) if (o[k] !== base[k]) d[k] = o[k]; return d; };
@@ -48,14 +49,27 @@ function textHTML(t, box) {
   for (const s of segs) {
     s.characters.split('\n').forEach((p, i) => { if (i > 0) lines.push([]); lines[lines.length - 1].push({ s, c: p }); });
   }
-  const base = fontCss(segs[0]);
+  const styles = new Map(segs.map(s => [s, fontCss(s)]));
+  const base = { ...styles.get(segs[0]) };
+  // Apply optional styles to individual spans if another run needs to turn them off.
+  for (const key of ['font-style', 'text-decoration', 'text-transform']) {
+    if (segs.some(s => styles.get(s)[key] !== base[key])) delete base[key];
+  }
   const align = { CENTER: 'center', RIGHT: 'right', JUSTIFIED: 'justify' }[box.align] || null;
   const wcss = box.width != null ? `width:${R(box.width)}px;white-space:pre-wrap` : 'white-space:pre';
+  let number = 0;
   const lineSpans = ln => {
     let h = '';
-    const lt = ln.find(x => x.s.listOptions && x.s.listOptions.type !== 'NONE');
-    if (lt && ln.some(x => x.c.length)) h += lt.s.listOptions.type === 'ORDERED' ? '' : '•  ';
-    for (const x of ln) { if (!x.c.length) continue; const d = st(diff(fontCss(x.s), base)); h += d ? `<span style="${d}">${esc(x.c)}</span>` : esc(x.c); }
+    const first = ln.find(x => x.c.length);
+    const type = first && first.s.listOptions && first.s.listOptions.type;
+    number = type === 'ORDERED' ? number + 1 : 0;
+    if (number) h += number + '.  ';
+    else if (type === 'UNORDERED') h += '•  ';
+    for (const x of ln) {
+      if (!x.c.length) continue;
+      const style = st(diff(styles.get(x.s), base));
+      h += style ? `<span style="${style}">${esc(x.c)}</span>` : esc(x.c);
+    }
     return h;
   };
   const lhs = lines.map(ln => Math.max(...ln.map(x => lhOf(x.s))));
