@@ -20,7 +20,7 @@ You’ll need Python 3.10 or later, the free splitter and a Paper Desktop MCP co
 
 ## Submission
 
-1. Run the tests in the README. In Figma Desktop, run Paper Export for FigJam on the demo page, save the JSON and split it into an empty folder. The demo produces three plan entries with 9, 11 and 1 top-level items. Check the imported artboards in Paper.
-2. In **Plugins → Manage plugins**, open **Publish** for Paper Export for FigJam. Use the name, tagline, description and category above. Upload the PNG icon and cover. Both have editable SVG sources in this directory. The cover uses the repository’s original demo screenshots.
+1. Run the [development checks](../import.md#development). In Figma Desktop, run Paper Export for FigJam on the demo page, save the JSON and split it into an empty folder. Check that the imported Paper artboards match the plan. “Gather & vote” has 20 top-level items and “Decide & assign” has 18.
+2. In **Plugins → Manage plugins**, open **Publish** for Paper Export for FigJam. Use the name, tagline, description and category above. Upload the PNG icon and cover. Both have editable SVG sources in this directory. The cover pairs the FigJam voting activity with the imported Paper handoff diagram.
 3. Enter the GitHub Issues URL in the support field. Verify that the manifest ID matches the one Figma assigned and that Figma displays **No network access**.
 4. The publishing account must have two-factor authentication enabled. The publisher selects the author, reviews the Community terms and submits the plugin when ready. [Figma’s publishing guide](https://help.figma.com/hc/en-us/articles/360042293394-Publish-classic-plugins-to-the-Figma-Community).
