@@ -1,11 +1,27 @@
 """Tests for tools/split_export.py. Run with: uv run pytest"""
 import base64
 import json
+from pathlib import Path
 
 import pytest
 from split_export import ExportError, elements, group, split_export
 
 PNG = base64.b64encode(b"\x89PNG fake bytes").decode()
+
+
+def test_bundled_workshop_splits_into_four_artboards_without_losing_layers(tmp_path):
+    from split_export import main
+
+    source = Path(__file__).resolve().parents[1] / "demo" / "workshop.json"
+    out = tmp_path / "workshop"
+    assert main([str(source), str(out)]) == 0
+    boards = json.loads(source.read_text(encoding="utf-8"))["sections"]
+    plan = json.loads((out / "plan.json").read_text(encoding="utf-8"))
+    assert len(plan["sections"]) == len(boards) == 4
+    for board, imported in zip(boards, plan["sections"]):
+        parts = imported["parts"]
+        assert sum(part["elements"] for part in parts) == board["total"]
+        assert "".join((out / "parts" / p["file"]).read_text(encoding="utf-8") for p in parts) == board["html"]
 
 
 def section(id_, html, total, **geo):
