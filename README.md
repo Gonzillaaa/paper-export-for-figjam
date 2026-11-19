@@ -10,6 +10,54 @@ The other obvious route is to read the board through Figma's MCP server and have
 
 This repo takes a different route. A small Figma plugin reads the whole board inside Figma, where there is no quota, and turns it into HTML in one pass. The rest happens offline.
 
+## Demo
+
+A small board with two sections: a retro made of stickies, and a launch flow made of shapes, connectors and a sticky.
+
+**Before, in FigJam:**
+
+![The demo board in FigJam](docs/images/demo-figjam.png)
+
+**After, in Paper:** every item is an editable layer at its original position and size.
+
+![The same board in Paper](docs/images/demo-paper.png)
+
+Two differences are visible: the "Users happy?" diamond arrives as a rectangle, and stickies lose their author label (we also hid the labels in the FigJam picture). Both are listed under [Limits](#limits).
+
+The split step turned this board into this plan (shortened):
+
+```json
+{
+  "budget": 24000,
+  "asset_prefix": "paper-asset:///path/to/out/assets",
+  "sections": [
+    {
+      "id": "6:3",
+      "name": "Team retro",
+      "left": 0, "top": 140, "width": 1180, "height": 760,
+      "fill": "#EBF5FF",
+      "border": "inset 0 0 0 2px #85C2FF",
+      "radius": 12,
+      "parts": [
+        { "file": "00-6-3-00.html", "elements": 9, "chars": 4111, "over_budget": false }
+      ]
+    },
+    {
+      "id": "6:40",
+      "name": "Launch plan",
+      "left": 1320, "top": 140, "width": 1240, "height": 760,
+      "parts": [
+        { "file": "01-6-40-00.html", "elements": 11, "chars": 11853, "over_budget": false }
+      ]
+    }
+  ]
+}
+```
+
+Items outside any section (here, the board title) go into a last entry named "Loose page items", with no size or fill.
+
+To build the same board yourself, import `demo/build-board/manifest.json` as a development plugin, run it once on an empty FigJam page, then follow the steps below.
+
 ## How it works
 
 1. **Export.** The plugin walks every section on the current FigJam page and converts each item to absolutely positioned HTML with inline styles. It downloads one file, `figjam-export.json`, holding each board's HTML and every image.
@@ -63,7 +111,7 @@ Tested on one FigJam board: 15 sections, 548 top-level items, 8 images, 73 conne
 |---|---|
 | Sections, frames, groups | Artboards and nested frames |
 | Stickies | Coloured frames with shadow and text, scaled to sticky size |
-| Shapes with text | Frames with fill, border and centred text; ellipses get a full radius |
+| Shapes with text | Frames with fill, border and centred text; ellipses get a full radius, other shapes become rectangles |
 | Text | Text layers with font, size, weight, colour, spacing, alignment and mixed styles |
 | Image rectangles | Images (`object-fit: cover`) |
 | Connectors, stamps, vectors, lines | SVG |
@@ -73,8 +121,9 @@ Tested on one FigJam board: 15 sections, 548 top-level items, 8 images, 73 conne
 
 - **Connectors are pictures, not live arrows.** They sit in the right place but do not follow items you move in Paper.
 - **Arrow placement.** Figma reports a connector's bounds without its arrowheads, so the plugin sizes each SVG from its own width and height and centres it on those bounds. We checked this on 73 connectors. Other vectors use the same rule; when their sizes already agree it changes nothing, but we have not checked every vector type.
+- **Shapes.** Only ellipses keep their outline. Diamonds, triangles and other FigJam shapes arrive as rectangles with the shape's fill, border and text.
 - **Fonts** are passed through by name. If Paper does not have a font, it falls back.
-- **Not exported:** comments, widgets' interactive state, hidden items, and anything outside the current page.
+- **Not exported:** sticky author labels, comments, widgets' interactive state, hidden items, and anything outside the current page.
 - **No automatic comparison.** Use the reference PNGs to check the result by eye.
 
 ## Development
