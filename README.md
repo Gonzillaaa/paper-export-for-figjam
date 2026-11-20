@@ -2,9 +2,9 @@
 
 Take a FigJam workshop into Paper. The notes stay where your team put them, and you can still move them around and edit what they say.
 
-In the sample, **Friday reviews**, three teammates jot down what happened last week. The pink sticky asks the question they want to settle before next Friday.
+The sample follows a two-week sprint called **Team invites**. A workspace admin has sent an email twice and still can’t tell whether Kai joined. The team has eight points to spend. They pick three tickets and leave bulk resend for later.
 
-![Friday reviews open in FigJam. Three stickies sit under “Last week”. An arrow points to a pink question and a green suggestion under “Next Friday”.](docs/images/demo-figjam.png)
+![FigJam board with three estimated tickets under Sprint planning. Under Sprint review, the team has circled “Copy link” on an expired invitation and recorded which tickets shipped.](docs/images/demo-figjam.png)
 
 **Try the sample first.** The project includes the workshop export. From the project folder, run `python3 tools/split_export.py demo/workshop.json sample-out/`, then use the prompt in step 3 with `sample-out/` as your folder. [Sample export](demo/workshop.json)
 
@@ -27,15 +27,17 @@ You’ll need the plugin in Figma, Python 3.10 or later, and an agent connected 
 
 ## Inside the sample workshop
 
-In FigJam the pink sticky asks, “Who’s picking up reviews after lunch?” Here’s the same board in Paper, after Sam answered, “I’ll take Friday after lunch.” You can see the selected text under **Friday cover** in the layer list.
+At the review, Lee can find Kai’s pending invite and Jo can join from a second email. The team holds the third ticket. In the invite-list sketch, **Copy link** still appears beside Ren’s expired invite.
 
-![Paper Desktop showing the same five stickies on one artboard. Sam’s reply is selected on the pink sticky, with its layer on the left and text settings on the right.](docs/images/demo-paper.png)
+The lilac sticky in FigJam asks what Lee should see there. Here’s the review area in Paper after Sam edited it to say, “Show Resend instead of Copy on expired invites.”
+
+![Paper Desktop zoomed in on the review. The invite list and three outcomes are visible, with Sam’s follow-up selected in the layer list and its Inter text settings on the right.](docs/images/demo-paper.png)
 
 To recreate the editable source board, import `demo/build-board/manifest.json` as a development plugin, run **Paper Export demo board** on an empty FigJam page, then export it with the main plugin.
 
 ## What comes across
 
-Each FigJam section becomes a Paper artboard. Loose items share an artboard called **Loose page items**, which is where you’ll find all five stickies in this sample. Groups and frames keep their layout, and image rectangles become image layers.
+Each FigJam section becomes a Paper artboard. Loose items share an artboard called **Loose page items**. In the sample, you can move a sticky or expand the invite-list group to edit a name, status or action. Groups and frames keep their layout, and image rectangles become image layers.
 
 A few details change. Connectors become fixed graphics, decision diamonds become rectangles, and sticky author labels are omitted. Font availability can affect line breaks. To compare a particular board, use **Export reference PNGs** in the plugin. [Import details, limits and troubleshooting](docs/import.md).
 

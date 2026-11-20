@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080">
   <title>Paper Export for FigJam</title>
-  <desc>Friday reviews open in FigJam and Paper. The pink sticky asks who can cover Friday. In Paper, its selected text contains Sam’s reply.</desc>
+  <desc>The Team invites sprint board in FigJam beside a close-up of the review in Paper. An expired invite has its Copy link action circled. Sam’s selected note records the change.</desc>
   <rect width="1920" height="1080" fill="#F7F5F9"/>
   <rect width="1920" height="230" fill="#262338"/>
   <image x="55" y="37" width="146" height="146" xlink:href="icon.svg"/>

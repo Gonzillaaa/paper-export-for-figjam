@@ -41,4 +41,4 @@ uv run --locked pytest
 uv run --locked ruff check .
 ```
 
-The JavaScript tests exercise the exporter, UI and demo builder through Figma and browser boundary fixtures. Python tests cover the splitter using files, including malformed exports, images and concurrent writes. For a live smoke test, build the sample on an empty FigJam page and import its export into Paper. Look for five stickies, three labels and an arrow on one artboard. Edit the pink sticky and compare it with the original in FigJam. [Workshop walkthrough](../README.md#inside-the-sample-workshop).
+The JavaScript tests exercise the exporter, UI and demo builder through Figma and browser boundary fixtures. Python tests cover the splitter using files, including malformed exports, images and concurrent writes. For a live smoke test, build the sprint sample on an empty FigJam page and import it into Paper. Check that all three planned tickets have matching review notes and that the invite-list sketch expands into editable layers. Edit the lilac follow-up and compare it with the original in FigJam. [Workshop walkthrough](../README.md#inside-the-sample-workshop).
