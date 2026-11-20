@@ -4,7 +4,7 @@ Take a FigJam workshop into Paper. The notes stay where your team put them, and 
 
 The sample follows a two-week sprint called **Team invites**. A workspace admin has sent an email twice and still can’t tell whether Kai joined. The team has eight points to spend. They pick three tickets and leave bulk resend for later.
 
-![FigJam board with three estimated tickets under Sprint planning. Under Sprint review, the team has circled “Copy link” on an expired invitation and recorded which tickets shipped.](docs/images/demo-figjam.png)
+![Team invites sprint board in FigJam, with “Copy link” circled on an expired invitation. The Paper Export for FigJam dialog shows that the board JSON download was requested.](docs/images/demo-figjam.png)
 
 **Try the sample first.** The project includes the workshop export. From the project folder, run `node tools/split_export.js demo/workshop.json sample-out/`, then use the prompt in step 3 with `sample-out/` as your folder. [Sample export](demo/workshop.json)
 
