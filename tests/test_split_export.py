@@ -1,6 +1,8 @@
 """Tests for tools/split_export.py. Run with: uv run pytest"""
 import base64
 import json
+import re
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -19,7 +21,18 @@ def test_bundled_workshop_splits_as_one_board_of_loose_notes(tmp_path):
     imported, = json.loads((out / "plan.json").read_text(encoding="utf-8"))["sections"]
     assert imported["id"] == "LOOSE"
     assert sum(part["elements"] for part in imported["parts"]) == board["total"]
-    assert "".join((out / "parts" / p["file"]).read_text(encoding="utf-8") for p in imported["parts"]) == board["html"]
+    html = "".join((out / "parts" / p["file"]).read_text(encoding="utf-8") for p in imported["parts"])
+    assert html == board["html"]
+    # Each planned ticket and its review should still be separate editable stickies.
+    tickets = []
+    for layer in elements(html):
+        if layer.startswith("<div"):
+            ticket = re.search(r"<p\b[^>]*>(INV-\d+)", layer)
+            if ticket:
+                tickets.append(ticket[1])
+    pairs = Counter(tickets)
+    assert len(pairs) == 3
+    assert all(count == 2 for count in pairs.values())
 
 
 def section(id_, html, total, **geo):
