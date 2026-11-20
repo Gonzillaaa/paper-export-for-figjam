@@ -20,7 +20,7 @@ You’ll need Python 3.10 or later, the free splitter and a Paper Desktop MCP co
 
 ## Submission
 
-1. Run the [development checks](../import.md#development). In Figma Desktop, run Paper Export for FigJam on the demo page, save the JSON and split it into an empty folder. Check the four Paper artboards against the plan. The evidence wall, blueprint, intervention map and pilot agreement contain 42, 69, 44 and 41 top-level layers respectively.
-2. In **Plugins → Manage plugins**, open **Publish** for Paper Export for FigJam. Use the name, tagline, description and category above. Upload the PNG icon and cover. Both have editable SVG sources in this directory. The cover pairs the FigJam evidence wall with the imported Paper service blueprint.
+1. Run the [development checks](../import.md#development). In Figma Desktop, run Paper Export for FigJam on the demo page, save the JSON and split it into an empty folder. Check each Paper artboard’s size, position and direct child count against the plan. Select a sticky and edit its text.
+2. In **Plugins → Manage plugins**, open **Publish** for Paper Export for FigJam. Use the name, tagline, description and category above. Upload the PNG icon and cover. Both have editable SVG sources in this directory. The cover shows the workshop open in FigJam and the imported notes open in Paper.
 3. Enter the GitHub Issues URL in the support field. Verify that the manifest ID matches the one Figma assigned and that Figma displays **No network access**.
 4. The publishing account must have two-factor authentication enabled. The publisher selects the author, reviews the Community terms and submits the plugin when ready. [Figma’s publishing guide](https://help.figma.com/hc/en-us/articles/360042293394-Publish-classic-plugins-to-the-Figma-Community).
