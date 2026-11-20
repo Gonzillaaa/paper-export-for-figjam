@@ -6,24 +6,52 @@ The sample follows a two-week sprint called **Team invites**. A workspace admin 
 
 ![Team invites sprint board in FigJam, with “Copy link” circled on an expired invitation. The Paper Export for FigJam dialog shows that the board JSON download was requested.](docs/images/demo-figjam.png)
 
-**Try the sample first.** The project includes the workshop export. From the project folder, run `node tools/split_export.js demo/workshop.json sample-out/`, then use the prompt in step 3 with `sample-out/` as your folder. [Sample export](demo/workshop.json)
-
 ## Use it
 
-You’ll need the plugin in Figma, Node.js 22 or later, and an agent connected to Paper Desktop. Download and unzip this project to get the splitter. It runs directly with Node and uses only built-in modules. [Download the project ZIP](https://github.com/Gonzillaaa/paper-export-for-figjam/archive/refs/heads/main.zip) · [Connect your agent to Paper](https://paper.design/docs/mcp).
+The FigJam plugin saves your current page as a JSON file. A command on your computer splits that file into layers, and your agent adds those layers to an open Paper file. To try the included workshop, you can skip the Figma installation.
 
-1. **Save your workshop.** Open the FigJam page you want and run **Paper Export for FigJam**. Save `figjam-export.json` beside this README. If the save dialog doesn’t appear, click **Download board JSON**. If you’re installing from source, first choose **Plugins → Development → Import plugin from manifest** in Figma Desktop and select `plugin/manifest.json`.
-2. **Prepare the layers.** Open a terminal in the project folder and run the command below. It creates `out/` with your artboard plan, layers and images. Choose a new or empty folder for each export.
+### Get the project and check Node.js
 
-   ```sh
-   node tools/split_export.js figjam-export.json out/
-   ```
+1. Download and unzip the project somewhere you’ll keep it. Open the folder containing `README.md`, `plugin` and `tools`. If you already cloned the repository, use that folder. [Download the project ZIP](https://github.com/Gonzillaaa/paper-export-for-figjam/archive/refs/heads/main.zip)
+2. Open a terminal in that folder. On macOS, right-click the folder in Finder and choose **New Terminal at Folder** (sometimes under **Services**). On Windows 11, right-click the folder in File Explorer and choose **Open in Terminal**.
+3. Run `node --version`. If the command is missing or the version is below 22, install the current Node.js LTS release, reopen the terminal in the project folder, and check again. The splitter runs directly with Node. [Download Node.js](https://nodejs.org/en/download)
 
-   Use the same command on macOS, Windows and Linux. It also works with earlier board exports.
+### Install the plugin in Figma Desktop
 
-3. **Bring it into Paper.** Open your destination file in Paper Desktop, give your connected agent access to `out/`, and paste this prompt.
+If you’re using the sample or already have an exported board JSON, go straight to [Prepare the layers](#prepare-the-layers).
 
-   > Import my workshop from `out/plan.json` onto this Paper page. Create an artboard for each entry using its name, dimensions, fill, shadow and radius. If there’s a board for loose items, size it to fit its contents. After creating each artboard, set its left and top from the plan with `update_styles`. Read its files from `out/parts/` in order and insert each file’s exact HTML once using `write_html` with `insert-children`. Check each board’s position and direct child count against the plan, then show me the result.
+1. Open a FigJam board you can edit in the Figma desktop app. [Download Figma Desktop](https://www.figma.com/downloads/)
+2. Right-click an empty spot on the canvas and choose **Plugins → Development → Import plugin from manifest…**.
+3. In the project folder, select `plugin/manifest.json` and click **Open**. The other manifest, under `demo/build-board/`, installs a separate tool that creates the sample board.
+4. On the page you want to export, choose **Plugins → Development → Paper Export for FigJam**. You should see the dialog in the screenshot above. Save `figjam-export.json` in the project folder, beside `README.md`. If Figma saves it to Downloads, move the file into the project folder. If the download didn’t start, click **Download board JSON**.
+
+For future exports, start at step 4.
+
+### Prepare the layers
+
+In the terminal you opened in the project folder, run the command for the board you want to import.
+
+**Your own board** — This reads the file you saved from FigJam and creates `out/plan.json`.
+
+```sh
+node tools/split_export.js figjam-export.json out/
+```
+
+**Sample workshop** — This creates `sample-out/plan.json` from the included export. Look for `Loose page items: 1 part(s), 23 items` in the terminal. [Sample export](demo/workshop.json)
+
+```sh
+node tools/split_export.js demo/workshop.json sample-out/
+```
+
+Both commands work on macOS, Windows and Linux, including with earlier board exports. Use a new or empty output folder each time. If you already used `out/` or `sample-out/`, change the last argument to a fresh folder name and use that folder below.
+
+### Bring the layers into Paper
+
+1. Open the destination design file in Paper Desktop. [Download Paper Desktop](https://paper.design/downloads)
+2. Click **Connect your agent** at the top right of the editor, choose your agent, and click **Add to** for that agent. Follow the instructions shown for your app. To check the connection, ask your agent, “What’s the name of my current Paper file?” [Paper’s agent setup guide](https://paper.design/docs/mcp)
+3. Give the same agent the full path to your output folder (`out/` or `sample-out/`) and access to its files. Keep the destination file open in Paper Desktop and paste this prompt.
+
+> Open `plan.json` in the output folder I shared and import the workshop onto this Paper page. Create an artboard for each entry using its name, dimensions, fill, shadow and radius. If there’s a board for loose items, size it to fit its contents. After creating each artboard, set its left and top from the plan with `update_styles`. Read the files from `parts/` in the order listed for each board and insert each file’s exact HTML once using `write_html` with `insert-children`. Check each board’s position and direct child count against the plan, then show me the result.
 
 ## Inside the sample workshop
 
