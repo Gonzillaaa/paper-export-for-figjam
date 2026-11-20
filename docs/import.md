@@ -32,13 +32,11 @@ An earlier version was also exercised on a larger workshop with 15 sections, 548
 
 ## Development
 
-The main plugin runs as plain JavaScript. `plugin/settings.json` holds the raster scale, reference width, SVG threshold and dialog size. `tools/settings.json` sets the default split budget.
+The plugin runs in Figma. The splitter runs locally with Node.js 22 or later and uses built-in modules for file I/O, JSON and image decoding. `plugin/settings.json` holds the raster scale, reference width, SVG threshold and dialog size. `tools/settings.json` sets the default split budget. Run `node tools/split_export.js --help` for the CLI options.
 
 ```sh
-node --test
-npx --yes oxlint@1.94.0 --deny-warnings plugin/code.js demo/build-board/code.js tests
-uv run --locked pytest
-uv run --locked ruff check .
+npm test
+npm run lint
 ```
 
-The JavaScript tests exercise the exporter, UI and demo builder through Figma and browser boundary fixtures. Python tests cover the splitter using files, including malformed exports, images and concurrent writes. For a live smoke test, build the sprint sample on an empty FigJam page and import it into Paper. Check that all three planned tickets have matching review notes and that the invite-list sketch expands into editable layers. Edit the lilac follow-up and compare it with the original in FigJam. [Workshop walkthrough](../README.md#inside-the-sample-workshop).
+The Node test runner exercises the exporter, UI and demo builder through Figma and browser boundary fixtures. Splitter tests launch the CLI against real files, including malformed exports, legacy images and simultaneous writes. For a live smoke test, build the sprint sample on an empty FigJam page and import it into Paper. Check that all three planned tickets have matching review notes and that the invite-list sketch expands into editable layers. Edit the lilac follow-up and compare it with the original in FigJam. [Workshop walkthrough](../README.md#inside-the-sample-workshop).

@@ -5,3 +5,4 @@ __pycache__/
 figjam-export*.json
 figjam-reference-pngs*.json
 out/
+sample-out/

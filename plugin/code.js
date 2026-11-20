@@ -1,7 +1,7 @@
 // Paper Export for FigJam. Read-only: never changes the FigJam file.
 // Converts every section on the current page (plus loose page items) to absolutely positioned HTML
 // and collects image bytes, then hands one JSON file to ui.html for download.
-// Image src values use ASSET as a placeholder; tools/split_export.py rewrites it to the real location.
+// Image src values use ASSET as a placeholder; tools/split_export.js rewrites it to the real location.
 const ASSET = '__FIGJAM_ASSET__';
 const R = v => Math.round(v * 100) / 100;
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

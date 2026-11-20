@@ -1,0 +1,14 @@
+{
+  "name": "paper-export-for-figjam",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Export FigJam boards to HTML and split them into pieces Paper can import.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "lint": "npx --yes oxlint@1.94.0 --deny-warnings plugin/code.js demo/build-board/code.js tools tests"
+  }
+}

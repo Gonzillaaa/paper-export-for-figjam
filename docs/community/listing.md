@@ -14,9 +14,9 @@
 
 Bring a workshop into Paper with its sticky notes, text and layout in place. Paper Export for FigJam saves the visible sections and loose items on your current FigJam page as one JSON file. Your FigJam board stays untouched.
 
-Run the companion Python splitter on the download, then use an agent connected to Paper Desktop to import the generated layers. Notes and text remain editable. Photos become image layers, connectors become static graphics, and decision diamonds become rectangles.
+Run the companion Node.js splitter on the download, then use an agent connected to Paper Desktop to import the generated layers. Notes and text remain editable. Photos become image layers, connectors become static graphics, and decision diamonds become rectangles.
 
-You’ll need Python 3.10 or later, the free splitter and a Paper Desktop MCP connection. The plugin has no network access. [Get the splitter and follow the walkthrough](https://github.com/Gonzillaaa/paper-export-for-figjam#use-it).
+You’ll need Node.js 22 or later, the free splitter and a Paper Desktop MCP connection. The plugin has no network access. [Get the splitter and follow the walkthrough](https://github.com/Gonzillaaa/paper-export-for-figjam#use-it).
 
 ## Submission
 
