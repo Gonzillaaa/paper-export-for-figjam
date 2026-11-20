@@ -12,7 +12,7 @@ The FigJam plugin saves your current page as a JSON file. A command on your comp
 
 ### Get the project and check Node.js
 
-1. Download and unzip the project somewhere you’ll keep it. Open the folder containing `README.md`, `plugin` and `tools`. If you already cloned the repository, use that folder. [Download the project ZIP](https://github.com/Gonzillaaa/paper-export-for-figjam/archive/refs/heads/main.zip)
+1. On the release page, open **Assets**, download the ZIP whose name starts with `paper-export-for-figjam-`, and unzip it. Open the folder containing `README.md`, `plugin` and `tools`. If you already cloned the repository, use that folder. [Get the latest release](https://github.com/Gonzillaaa/paper-export-for-figjam/releases/latest)
 2. Open a terminal in that folder. On macOS, right-click the folder in Finder and choose **New Terminal at Folder** (sometimes under **Services**). On Windows 11, right-click the folder in File Explorer and choose **Open in Terminal**.
 3. Run `node --version`. If the command is missing or the version is below 22, install the current Node.js LTS release, reopen the terminal in the project folder, and check again. The splitter runs directly with Node. [Download Node.js](https://nodejs.org/en/download)
 
